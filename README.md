@@ -12,4 +12,4 @@ This telegram bot project called GroupTogether has the aim of allowing universit
 # Project Demo
 # References
 # Telegram Handle
-@GroupTogether_bot
+[@GroupTogether_bot](https://t.me/GroupTogether_bot)
