@@ -1,3 +1,6 @@
 pytelegrambotapi
 gtts
 praw
+flask
+SQLAlchemy
+flask_sqlalchemy
