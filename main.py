@@ -96,5 +96,38 @@ def start(message):
     message_text = f'Welcome back {chat_user}, Please select if you are finding a group member or looking for a group.'
     bot.send_message(chat_id, message_text, reply_markup = keyboard)
 
-        
+@bot.callback_query_handler(lambda query: query.data == 'Find_groupmates')
+def handle_callback(call):
+  """
+  Handles the execution of the respective functions upon receipt of the callback query
+  """
+  chat_id = call.message.chat.id
+
+  #bot.register_next_step_handler(msg,confirmEvent)
+  pass
+
+@bot.callback_query_handler(lambda query: query.data == 'Find_group')
+def handle_callback(call):
+  """
+  Handles the execution of the respective functions upon receipt of the callback query
+  """
+  chat_id = call.message.chat.id
+  
+  pass
+
+def enter_school(chat_id):
+    bot.send_message(chat_id, "Please type in your school name (Eg: NUS)")
+
+def enter_module(chat_id):
+    bot.send_message(chat_id, "Please type in your module code")
+    
+def enter_section(chat_id):
+    bot.send_message(chat_id, "Please type in your section")
+
+def enter_semester(chat_id):
+    bot.send_message(chat_id, "Please type in your semester")
+
+def enter_avail(chat_id):
+    bot.send_message(chat_id, "Please type in the number of available slots")
+    
 bot.infinity_polling()
