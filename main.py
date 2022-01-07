@@ -34,6 +34,7 @@ class Looking_For_Group(db.Model):
     school = db.Column(db.String(100), nullable=False, primary_key=True)
     module_code = db.Column(db.String(100), nullable=False, primary_key=True)
     semester = db.Column(db.Integer, nullable=False,primary_key=True)
+    section = db.Column(db.String(100), nullable=False)
     
 class Looking_For_Members(db.Model):
     __tablename__ = 'looking_for_members'
@@ -42,6 +43,7 @@ class Looking_For_Members(db.Model):
     school = db.Column(db.String(100), nullable=False, primary_key=True)
     module_code = db.Column(db.String(100), nullable=False, primary_key=True)
     semester = db.Column(db.Integer, nullable=False,primary_key=True)
+    section = db.Column(db.String(100), nullable=False)
     num_members_need = db.Column(db.Integer, nullable=False)
     
 class Match_Found(db.Model):
@@ -52,6 +54,7 @@ class Match_Found(db.Model):
     school = db.Column(db.String(100), nullable=False, primary_key=True)
     module_code = db.Column(db.String(100), nullable=False, primary_key=True)
     semester = db.Column(db.Integer, nullable=False,primary_key=True)
+    section = db.Column(db.String(100), nullable=False)
     accepted = db.Column(db.String(1), nullable=False)
     
 def idExists(chat_id):
@@ -60,6 +63,30 @@ def idExists(chat_id):
     for user in users:
         return True
     return False
+
+temp_find_group_dict = {}
+
+class Temp_Find_Group:
+    def __init__(self,school):
+        self.school = school
+        self.module_code = None
+        self.semester = None
+        self.section = None
+        
+    def setModuleCode(self,module_code):
+        self.module_code = module_code
+    def setSemester(self,sem):
+        self.module_code = sem
+    def setSection(self,section):
+        self.section = section
+    def getSchool(self):
+        return self.school
+    def getModuleCode(self):
+        return self.module_code
+    def getSemester(self):
+        return self.semester
+    def getSection(self):
+        return self.section
 
 bot.set_my_commands([
     BotCommand('start', 'Start finding your groupmates now!'),
@@ -129,28 +156,43 @@ def enter_school(message):
         # new_record = Looking_For_Group(chat_id=chat_id,school=school)
         # db.session.add(new_record)
         # db.session.commit()
+        temp_find_group = Temp_Find_Group(school)
+        temp_find_group_dict[chat_id] = temp_find_group
         msg = bot.send_message(chat_id, "Please type in your module code (Eg: IS216)")
         bot.register_next_step_handler(msg, enter_module)
 
 def enter_module(message):
     chat_id = message.chat.id
-    module = message.text.strip
+    module = message.text
+    print("module",module)
+    temp_find_group = temp_find_group_dict[chat_id]
+    temp_find_group.setModuleCode(module)
     msg = bot.send_message(chat_id, "Please type in your section (Eg: G11)")
     bot.register_next_step_handler(msg, enter_section)
 
     
 def enter_section(message):
     chat_id = message.chat.id
-    section = message.text.strip
+    section = message.text.strip()
+    temp_find_group = temp_find_group_dict[chat_id]
+    temp_find_group.setSection(section)
     msg = bot.send_message(chat_id, "Please type in your semester (1 or 2)")
     bot.register_next_step_handler(msg, enter_semester)
 
 
 def enter_semester(message):
     chat_id = message.chat.id
-    semester = message.text.strip
+    semester = message.text
+    print("semester",semester)
+    temp_find_group = temp_find_group_dict[chat_id]
+    temp_find_group.setSemester(semester)
     
-    
+    # Add to DB
+    new_record = Looking_For_Group(chat_id=chat_id,school=temp_find_group.getSchool(),module_code=temp_find_group.getModuleCode(),semester=temp_find_group.getSemester(),section=temp_find_group.getSection())
+    db.session.add(new_record)
+    db.session.commit()
+    bot.send_message(chat_id, "Your group search request has been successfully created. Now we will search for available groups for you...")
+    # Search
 
 def enter_avail(message):
     chat_id = message.chat.id
