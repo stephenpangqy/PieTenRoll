@@ -71,64 +71,28 @@ def start(message):
     Command that welcomes the user and configures the initial setup
     """
     chat_id = message.chat.id
-    already_registered = idExists(chat_id)
-    if not already_registered:
-        message_text = f'Hello, welcome to GroupTogether bot. It looks like this is your first time, Please enter your name in the next bubble.\n\nThis name will be used to identify yourself to others.'
-        msg = bot.send_message(chat_id,message_text)
-        bot.register_next_step_handler(msg,register)
+    if message.chat.type == 'private':
+        chat_user = message.chat.first_name
     else:
-        if message.chat.type == 'private':
-            chat_user = message.chat.first_name
-        else:
-            chat_user = message.chat.title
-        
-        bot.send_sticker(
-            chat_id=chat_id, 
-            data='CAACAgUAAxkBAAEDoRJh1y0KgigTU87x7QYrbKJNbfDavQACawMAAlobywF60Koi6G4EECME'
-        )
+        chat_user = message.chat.title
+    
+    bot.send_sticker(
+        chat_id=chat_id, 
+        data='CAACAgUAAxkBAAEDoRJh1y0KgigTU87x7QYrbKJNbfDavQACawMAAlobywF60Koi6G4EECME'
+    )
 
-        buttons = [
-            InlineKeyboardButton(
-            text = "Find groupmates",
-            callback_data = "Find_groupmates"
-        ),
-            InlineKeyboardButton(
-            text = "Find group",
-            callback_data = "Find_group"
-        )]
+    buttons = [
+        InlineKeyboardButton(
+        text = "Find groupmates",
+        callback_data = "Find_groupmates"
+    ),
+        InlineKeyboardButton(
+        text = "Find group",
+        callback_data = "Find_group"
+    )]
 
-        message_text = f'Welcome back {chat_user}, Please select if you are finding a group member or looking for a group.'
-        bot.send_message(chat_id, message_text, reply_markup = InlineKeyboardMarkup(buttons))
+    message_text = f'Welcome back {chat_user}, Please select if you are finding a group member or looking for a group.'
+    bot.send_message(chat_id, message_text, reply_markup = InlineKeyboardMarkup(buttons))
 
-def register(message):
-    chat_id = message.chat.id
-    name = message.text.strip()
-    if name == "":
-        msg = bot.reply_to(message,'Your name cannot be empty. Please enter your name again!')
-        bot.register_next_step_handler(msg,register)
-        return
-    elif len(name) > 100:
-        msg = bot.reply_to(message,"Your name cannot be longer than 100 characters. Please enter your name again!")
-        bot.register_next_step_handler(msg,register)
-        return
-    else:
-        new_user = Users(chat_id=chat_id,name=name)
-        db.session.add(new_user)
-        db.session.commit()
-        buttons = [
-            InlineKeyboardButton(
-            text = "Find groupmates",
-            callback_data = "Find_groupmates"
-        ),
-            InlineKeyboardButton(
-            text = "Find group",
-            callback_data = "Find_group"
-        )]
-        keyboard = InlineKeyboardMarkup()
-        for button in buttons:
-            keyboard.add(button)
-        bot.reply_to(message, "Thank you " + name + ", you have been registered on our bot.")
-        message_text = f'Now, Please select if you are finding a group member or looking for a group.'
-        bot.send_message(chat_id, message_text, reply_markup = keyboard)
         
 bot.infinity_polling()
