@@ -51,10 +51,6 @@ class Match_Found(db.Model):
 
 
 bot.set_my_commands([
-<<<<<<< Updated upstream
-    BotCommand('start', 'Get a welcoming introduction from the bot'),
-])
-=======
     BotCommand('start', 'Start finding your groupmates now!'),
 ])
 
@@ -89,4 +85,3 @@ def start(message):
     bot.send_message(chat_id, message_text, reply_markup = InlineKeyboardMarkup(buttons))
 
 bot.infinity_polling()
->>>>>>> Stashed changes
