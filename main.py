@@ -433,6 +433,10 @@ def endConvo(query):
             data = {'chat_id': other_chat_id, 'text': 'Hooray, ' + name + ' has agreed to group together with you for the project. Ending the private conversation.'}
             requests.post(url,data).json()
             bot.send_message(chat_id,"Congratulations! You and " + other_name + " have agreed to group together. Ending private conversation.")
+            if looking_for_member.num_members_need == 0:
+                bot.send_message(looking_for_member.chat_id,"Your group is now full! We will be removing your request from our system. Thank you for using GroupTogether!")
+                db.session.delete(looking_for_member)
+                db.session.commit()
             del accept_dict[(int(match_list[0]),int(match_list[1]))]
             del conversation_dict[chat_id]
             del conversation_dict[other_chat_id]
@@ -456,8 +460,9 @@ def converse(message):
         bot.send_message(chat_id,"You are not in a conversation!")
     else:
         other_chat_id = conversation_dict[chat_id]
+        name = Users.query.filter_by(chat_id=chat_id)
         url = 'https://api.telegram.org/bot' + API_KEY + '/sendMessage'
-        data = {'chat_id': other_chat_id, 'text': chat_message}
+        data = {'chat_id': other_chat_id, 'text': "From " + name + ": " + chat_message}
         requests.post(url,data).json()
         msg = bot.reply_to(message,"Message sent!")
         print(conversation_dict)
