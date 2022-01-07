@@ -211,13 +211,14 @@ def view(message):
             break
         
         if flag1:
-            output += "Looking for Groups :\n\n"
+            output += "*Looking for Groups* :\n\n"
             for group in groups:
                 school = group.school
                 module_code = group.module_code
                 semester = group.semester
                 section = group.section
-                output += school + " Semester " + str(semester) + " " + module_code +  " " + section + "\n"
+                # output += school + " Semester " + str(semester) + " " + module_code +  " " + section + "\n"
+                output += " Semester: *" + str(semester) + "* Module: *" + module_code +  "* Section:* " + section + "*\n"
         
         members = Looking_For_Members.query.filter_by(chat_id = chat_id)
         
@@ -226,7 +227,7 @@ def view(message):
             break
         
         if flag2:
-            output += "\n Looking for Members :\n\n"
+            output += "\n *Looking for Members* :\n\n"
             for memb in members:
                 school = memb.school
                 module_code = memb.module_code
@@ -234,12 +235,13 @@ def view(message):
                 section = memb.section
                 num_mem_need = memb.num_members_need
                 
-                output += school + " semester " + str(semester) + " " + module_code +  " " + section + ": " + str(num_mem_need) + "\n"
+                # output += school + " semester " + str(semester) + " " + module_code +  " " + section + ": " + str(num_mem_need) + "\n"
+                output += " Semester: *" + str(semester) + "* Module: *" + module_code +  "* Section:* " + section + "* Num remaining: *"+ str(num_mem_need) + "* \n"
 
         if not flag1 and not flag2:
             bot.send_message(chat_id, "~ Nothing to view ~")
         else:
-            bot.send_message(chat_id, output)
+            bot.send_message(chat_id, output, parse_mode= 'Markdown')
 
 
 @bot.callback_query_handler(lambda query: query.data == 'Find_groupmates')
