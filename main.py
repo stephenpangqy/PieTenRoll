@@ -7,7 +7,7 @@ from telebot.types import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 
 
 
-API_KEY = "5047659649:AAHxljzEetaON7tXSqaCiFbNXckHFoHnIrg"
+API_KEY = "5011942238:AAHj-8qXwf7Aw1C0cWEkJ2qqgsjls7iuRAU"
 bot = telebot.TeleBot(API_KEY)
 
 
