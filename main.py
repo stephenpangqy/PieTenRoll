@@ -11,7 +11,7 @@ global find_group
 find_groupmates = None
 find_group = None
 
-API_KEY = "5047659649:AAHxljzEetaON7tXSqaCiFbNXckHFoHnIr"
+API_KEY = "5047659649:AAHxljzEetaON7tXSqaCiFbNXckHFoHnIrg"
 bot = telebot.TeleBot(API_KEY)
 
 
@@ -278,6 +278,19 @@ def enter_avail(message):
     new_record = Looking_For_Members(chat_id=chat_id,school=temp_find_member.getSchool(),module_code=temp_find_member.getModuleCode(),semester=temp_find_member.getSemester(),section=temp_find_member.getSection(), num_members_need=temp_find_member.getNumMembersNeeded())
     db.session.add(new_record)
     db.session.commit()
+    
     bot.send_message(chat_id, "Your group search request has been successfully created. Now we will search for available groups for you...")
-
+    
+@bot.message_handler(commands=['search'])
+def search(message):
+    chat_id = message.chat.id
+    
+    temp_find_group = temp_find_group_dict[chat_id]
+    #print(temp_find_group.getSchool())
+    find_groups = Looking_For_Members.query.filter_by(school=temp_find_group.getSchool(),module_code=temp_find_group.getModuleCode(),semester=temp_find_group.getSemester(), section=temp_find_group.getSection())
+    
+    print(find_groups.first().chat_id)
+    
+    
+    pass
 bot.infinity_polling()
