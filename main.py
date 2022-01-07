@@ -294,8 +294,9 @@ def enter_semester1(message):
     new_record = Looking_For_Group(chat_id=chat_id,school=temp_find_group.getSchool(),module_code=temp_find_group.getModuleCode(),semester=temp_find_group.getSemester(),section=temp_find_group.getSection())
     db.session.add(new_record)
     db.session.commit()
-    bot.send_message(chat_id, "Your group search request has been successfully created. Now we will search for available groups for you...")
-    # Search Code here
+    
+    msg = bot.send_message(chat_id, "Your group search request has been successfully created. We will search for available groups for you...")
+    bot.register_next_step_handler(msg, search1(chat_id))
 
 def enter_semester2(message):
     chat_id = message.chat.id
@@ -315,8 +316,11 @@ def enter_avail(message):
     new_record = Looking_For_Members(chat_id=chat_id,school=temp_find_member.getSchool(),module_code=temp_find_member.getModuleCode(),semester=temp_find_member.getSemester(),section=temp_find_member.getSection(), num_members_need=temp_find_member.getNumMembersNeeded())
     db.session.add(new_record)
     db.session.commit()
-    bot.send_message(chat_id, "Your group search request has been successfully created. Now we will search for available groups for you...")
-    # Search Code Here
+    
+    msg = bot.send_message(chat_id, "Your group search request has been successfully created. We will search for available groups for you...")
+    bot.register_next_step_handler(msg, search2(chat_id))
+    
+    
 
 @bot.callback_query_handler(lambda query: query.data.split(":")[0] == 'converse')
 def start_convo(query):
@@ -377,5 +381,37 @@ def startConvo(message):
         data = {'chat_id': other_chat_id, 'text': name + ' is now online. You can start talking to them.'}
         requests.post(url,data).json()
         bot.register_next_step_handler(msg,converse)
+
+# Search Code Here
+def search1(chat_id):
+    
+    temp_find_group = temp_find_group_dict[chat_id]
+
+    try:
+        find_groups = Looking_For_Members.query.filter_by(school=temp_find_group.getSchool(),module_code=temp_find_group.getModuleCode(),semester=temp_find_group.getSemester(), section=temp_find_group.getSection())
+    
+        print(find_groups.first().chat_id)
+        bot.send_message(chat_id, "We have found a match!")
+        
+    except:
+        bot.send_message(chat_id, "Sorry no match!")
+
+    pass
+
+
+def search2(chat_id):
+    
+    temp_find_member = temp_find_member_dict[chat_id]
+
+    try:
+        find_memebers = Looking_For_Group.query.filter_by(school=temp_find_member.getSchool(),module_code=temp_find_member.getModuleCode(),semester=temp_find_member.getSemester(), section=temp_find_member.getSection())
+    
+        print(find_memebers.first().chat_id)
+        bot.send_message(chat_id, "We have found a match!")
+    
+    except:
+        bot.send_message(chat_id, "Sorry no match!")
+
+    pass
 
 bot.infinity_polling()
