@@ -92,7 +92,7 @@ def start(message):
         bot.send_message(chat_id, message_text, reply_markup = keyboard)
     else:
         bot.send_message(chat_id, f'Welcome to GroupTogether bot, We help you find your teammates with ease!')
-        msg = bot.send_message(message.chat.id,"It looks like this is your first time using me. Please enter your name in the next chat bubble; make sure your instructors can recognize your name.")
+        msg = bot.send_message(message.chat.id,"It looks like this is your first time using me. Please enter your name in the next chat bubble; this will be the name that others see you as.")
         bot.register_next_step_handler(msg, register)
 
 def register(message):
