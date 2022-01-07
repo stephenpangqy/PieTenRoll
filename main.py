@@ -134,21 +134,21 @@ def enter_school(message):
 
 def enter_module(message):
     chat_id = message.chat.id
-    module = message.text.strip
+    module = message.text.strip()
     msg = bot.send_message(chat_id, "Please type in your section (Eg: G11)")
     bot.register_next_step_handler(msg, enter_section)
 
     
 def enter_section(message):
     chat_id = message.chat.id
-    section = message.text.strip
+    section = message.text.strip()
     msg = bot.send_message(chat_id, "Please type in your semester (1 or 2)")
     bot.register_next_step_handler(msg, enter_semester)
 
 
 def enter_semester(message):
     chat_id = message.chat.id
-    semester = message.text.strip
+    semester = message.text.strip()
     
     
 
