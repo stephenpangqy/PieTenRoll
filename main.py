@@ -116,6 +116,7 @@ class Temp_Find_Member:
 
 bot.set_my_commands([
     BotCommand('start', 'Start finding your groupmates now!'),
+    BotCommand('view', 'View your list of groups/members you are finding!'),
 ])
 
 @bot.message_handler(commands=['start'])
@@ -191,7 +192,56 @@ def register(message):
         message_text = f'Now, Please select if you are finding a group member or looking for a group.'
         bot.send_message(chat_id, message_text, reply_markup = keyboard)
     
+@bot.message_handler(commands=['view'])
+def view(message):
+    chat_id = message.chat.id
+    id_exist = idExists(chat_id)
     
+    flag1 = False
+    flag2 = False
+    
+    if not id_exist:
+        start(message)
+    else:
+        output = ""
+        groups = Looking_For_Group.query.filter_by(chat_id = chat_id)
+        
+        for group in groups:
+            flag1 = True
+            break
+        
+        if flag1:
+            output += "Looking for Groups :\n\n"
+            for group in groups:
+                school = group.school
+                module_code = group.module_code
+                semester = group.semester
+                section = group.section
+                output += school + " Semester " + str(semester) + " " + module_code +  " " + section + "\n"
+        
+        members = Looking_For_Members.query.filter_by(chat_id = chat_id)
+        
+        for memb in members:
+            flag2 = True
+            break
+        
+        if flag2:
+            output += "\n Looking for Members :\n\n"
+            for memb in members:
+                school = memb.school
+                module_code = memb.module_code
+                semester = memb.semester
+                section = memb.section
+                num_mem_need = memb.num_members_need
+                
+                output += school + " semester " + str(semester) + " " + module_code +  " " + section + ": " + str(num_mem_need) + "\n"
+
+        if not flag1 and not flag2:
+            bot.send_message(chat_id, "~ Nothing to view ~")
+        else:
+            bot.send_message(chat_id, output)
+
+
 @bot.callback_query_handler(lambda query: query.data == 'Find_groupmates')
 def handle_callback(call):
     """
