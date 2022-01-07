@@ -5,4 +5,5 @@
   Hazel
 * TAN TING CHER BENJAMIN (benjamintan.2020@scis.smu.edu.sg)
   Benjamin
-* STEPHEN
+* STEPHEN PANG QING YANG (stephenpang.2019@scis.smu.edu.sg)
+Stephen
