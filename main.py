@@ -90,9 +90,11 @@ def start(message):
         text = "Find group",
         callback_data = "Find_group"
     )]
-
+    keyboard = InlineKeyboardMarkup()
+    for button in buttons:
+        keyboard.add(button)
     message_text = f'Welcome back {chat_user}, Please select if you are finding a group member or looking for a group.'
-    bot.send_message(chat_id, message_text, reply_markup = InlineKeyboardMarkup(buttons))
+    bot.send_message(chat_id, message_text, reply_markup = keyboard)
 
         
 bot.infinity_polling()
