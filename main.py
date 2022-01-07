@@ -5,6 +5,8 @@ from flask_sqlalchemy import SQLAlchemy
 import telebot
 from telebot.types import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 
+from telebot import types
+
 API_KEY = "5047659649:AAHxljzEetaON7tXSqaCiFbNXckHFoHnIrg"
 bot = telebot.TeleBot(API_KEY)
 
@@ -123,6 +125,22 @@ def register(message):
         bot.send_message(chat_id, message_text, reply_markup = InlineKeyboardMarkup(buttons))
         
 
-
+    buttons = [
+        InlineKeyboardButton(
+        text = "Find groupmates",
+        callback_data = "Find_groupmates"
+    ),
+        InlineKeyboardButton(
+        text = "Find group",
+        callback_data = "Find_group"
+    )]
+    
+    keyboard = InlineKeyboardMarkup()
+    
+    for button in buttons:
+        keyboard.add(button)
+    
+    message_text = f'Hello {chat_user}, welcome to GroupTogether bot. Please select if you are finding a group member or looking for a group.'
+    bot.send_message(chat_id, message_text, reply_markup = keyboard)
 
 bot.infinity_polling()
