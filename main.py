@@ -148,7 +148,7 @@ def handle_callback(call):
     Handles the execution of the respective functions upon receipt of the callback query
     """
     chat_id = call.message.chat.id
-
+    
     pass
 
 def enter_school(chat_id):
