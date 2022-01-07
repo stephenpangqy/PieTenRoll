@@ -11,7 +11,7 @@ global find_group
 find_groupmates = None
 find_group = None
 
-API_KEY = "5047659649:AAHxljzEetaON7tXSqaCiFbNXckHFoHnIrg"
+API_KEY = "5047659649:AAHxljzEetaON7tXSqaCiFbNXckHFoHnIr"
 bot = telebot.TeleBot(API_KEY)
 
 
@@ -65,6 +65,7 @@ def idExists(chat_id):
     return False
 
 temp_find_group_dict = {}
+temp_find_member_dict = {}
 
 class Temp_Find_Group:
     def __init__(self,school):
@@ -87,6 +88,33 @@ class Temp_Find_Group:
         return self.semester
     def getSection(self):
         return self.section
+
+class Temp_Find_Member:
+    def __init__(self,school):
+        self.school = school
+        self.module_code = None
+        self.semester = None
+        self.section = None
+        self.num_members_needed = None
+        
+    def setModuleCode(self,module_code):
+        self.module_code = module_code
+    def setSemester(self,sem):
+        self.semester = sem
+    def setSection(self,section):
+        self.section = section
+    def setNumMembersNeeded(self,num_members_needed):
+        self.num_members_needed = num_members_needed
+    def getSchool(self):
+        return self.school
+    def getModuleCode(self):
+        return self.module_code
+    def getSemester(self):
+        return self.semester
+    def getSection(self):
+        return self.section
+    def getNumMembersNeeded(self):
+        return self.num_members_needed
 
 bot.set_my_commands([
     BotCommand('start', 'Start finding your groupmates now!'),
@@ -129,9 +157,8 @@ def handle_callback(call):
     Handles the execution of the respective functions upon receipt of the callback query
     """
     chat_id = call.message.chat.id
-
-    #bot.register_next_step_handler(msg,confirmEvent)
-    pass
+    msg = bot.send_message(chat_id, "Please type in your school name (Eg: NUS)")
+    bot.register_next_step_handler(msg, enter_school2)
 
 @bot.callback_query_handler(lambda query: query.data == 'Find_group')
 def handle_callback(call):
@@ -140,17 +167,17 @@ def handle_callback(call):
     """
     chat_id = call.message.chat.id
     msg = bot.send_message(chat_id, "Please type in your school name (Eg: NUS)")
-    bot.register_next_step_handler(msg, enter_school)
+    bot.register_next_step_handler(msg, enter_school1)
     
     
 
-def enter_school(message):
+def enter_school1(message):
     chat_id = message.chat.id
     school = message.text.upper().strip()
     school_list = ['NUS','NTU','SMU']
     if school not in school_list: 
         msg = bot.reply_to(message,'School is invalid, please try again!')
-        bot.register_next_step_handler(msg,enter_school)
+        bot.register_next_step_handler(msg,enter_school1)
         return
     else:
         # new_record = Looking_For_Group(chat_id=chat_id,school=school)
@@ -159,9 +186,28 @@ def enter_school(message):
         temp_find_group = Temp_Find_Group(school)
         temp_find_group_dict[chat_id] = temp_find_group
         msg = bot.send_message(chat_id, "Please type in your module code (Eg: IS216)")
-        bot.register_next_step_handler(msg, enter_module)
+        bot.register_next_step_handler(msg, enter_module1)
 
-def enter_module(message):
+
+def enter_school2(message):
+    chat_id = message.chat.id
+    school = message.text.upper().strip()
+    school_list = ['NUS','NTU','SMU']
+    if school not in school_list: 
+        msg = bot.reply_to(message,'School is invalid, please try again!')
+        bot.register_next_step_handler(msg,enter_school2)
+        return
+    else:
+        # new_record = Looking_For_Group(chat_id=chat_id,school=school)
+        # db.session.add(new_record)
+        # db.session.commit()
+        temp_find_member = Temp_Find_Member(school)
+        temp_find_member_dict[chat_id] = temp_find_member
+        msg = bot.send_message(chat_id, "Please type in your module code (Eg: IS216)")
+        bot.register_next_step_handler(msg, enter_module2)
+
+
+def enter_module1(message):
     chat_id = message.chat.id
     module = message.text.strip()
     print("module",module)
@@ -169,26 +215,44 @@ def enter_module(message):
     temp_find_group = temp_find_group_dict[chat_id]
     temp_find_group.setModuleCode(module)
     msg = bot.send_message(chat_id, "Please type in your section (Eg: G11)")
-    bot.register_next_step_handler(msg, enter_section)
+    bot.register_next_step_handler(msg, enter_section1)
+
+def enter_module2(message):
+    chat_id = message.chat.id
+    module = message.text.strip()
+    print("module",module)
+    print()
+    temp_find_member = temp_find_member_dict[chat_id]
+    temp_find_member.setModuleCode(module)
+    msg = bot.send_message(chat_id, "Please type in your section (Eg: G11)")
+    bot.register_next_step_handler(msg, enter_section2)
 
     
-def enter_section(message):
+def enter_section1(message):
     chat_id = message.chat.id
     section = message.text.strip()
     temp_find_group = temp_find_group_dict[chat_id]
     temp_find_group.setSection(section)
     msg = bot.send_message(chat_id, "Please type in your semester (1 or 2)")
-    bot.register_next_step_handler(msg, enter_semester)
+    bot.register_next_step_handler(msg, enter_semester1)
+
+def enter_section2(message):
+    chat_id = message.chat.id
+    section = message.text.strip()
+    temp_find_member = temp_find_member_dict[chat_id]
+    temp_find_member.setSection(section)
+    msg = bot.send_message(chat_id, "Please type in your semester (1 or 2)")
+    bot.register_next_step_handler(msg, enter_semester2)
 
 
-def enter_semester(message):
+def enter_semester1(message):
     chat_id = message.chat.id
     semester = message.text.strip()
     print("semester",semester)
     temp_find_group = temp_find_group_dict[chat_id]
     temp_find_group.setSemester(semester)
-    print("getSemester()",temp_find_group.getSemester())
-    print("getModuleCode",temp_find_group.getModuleCode())
+    # print("getSemester()",temp_find_group.getSemester())
+    # print("getModuleCode",temp_find_group.getModuleCode())
     # Add to DB
     new_record = Looking_For_Group(chat_id=chat_id,school=temp_find_group.getSchool(),module_code=temp_find_group.getModuleCode(),semester=temp_find_group.getSemester(),section=temp_find_group.getSection())
     db.session.add(new_record)
@@ -196,8 +260,24 @@ def enter_semester(message):
     bot.send_message(chat_id, "Your group search request has been successfully created. Now we will search for available groups for you...")
     # Search
 
+def enter_semester2(message):
+    chat_id = message.chat.id
+    semester = message.text.strip()
+    print("semester",semester)
+    temp_find_member = temp_find_member_dict[chat_id]
+    temp_find_member.setSemester(semester)
+    msg = bot.send_message(chat_id, "Please type how many more members you need to find")
+    bot.register_next_step_handler(msg, enter_avail)
+
 def enter_avail(message):
     chat_id = message.chat.id
-    
-    
+    avail = message.text.strip()
+    # Add to DB
+    temp_find_member = temp_find_member_dict[chat_id]
+    temp_find_member.setNumMembersNeeded(avail)
+    new_record = Looking_For_Members(chat_id=chat_id,school=temp_find_member.getSchool(),module_code=temp_find_member.getModuleCode(),semester=temp_find_member.getSemester(),section=temp_find_member.getSection(), num_members_need=temp_find_member.getNumMembersNeeded())
+    db.session.add(new_record)
+    db.session.commit()
+    bot.send_message(chat_id, "Your group search request has been successfully created. Now we will search for available groups for you...")
+
 bot.infinity_polling()
