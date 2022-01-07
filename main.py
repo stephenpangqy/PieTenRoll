@@ -63,7 +63,7 @@ def idExists(chat_id):
 temp_find_group_dict = {}
 temp_find_member_dict = {}
 conversation_dict = {}
-
+accept_dict = {}
 
 class Temp_Find_Group:
     def __init__(self,school):
@@ -287,8 +287,6 @@ def enter_semester1(message):
     semester = message.text.strip()
     temp_find_group = temp_find_group_dict[chat_id]
     temp_find_group.setSemester(semester)
-    # print("getSemester()",temp_find_group.getSemester())
-    # print("getModuleCode",temp_find_group.getModuleCode())
     # Add to DB
     new_record = Looking_For_Group(chat_id=chat_id,school=temp_find_group.getSchool(),module_code=temp_find_group.getModuleCode(),semester=temp_find_group.getSemester(),section=temp_find_group.getSection())
     db.session.add(new_record)
@@ -315,7 +313,7 @@ def enter_avail(message):
     db.session.add(new_record)
     db.session.commit()
     
-    msg = bot.send_message(chat_id, "Your group search request has been successfully created. We will search for available members andfor you...")
+    msg = bot.send_message(chat_id, "Your group search request has been successfully created. We will search for available members for you...")
     bot.register_next_step_handler(msg, search2(chat_id))
     
     
@@ -324,9 +322,12 @@ def enter_avail(message):
 def start_convo(query):
     response = query.data.split(":")[1]
     other_chat_id = int(query.data.split(":")[2])
+    match_string = query.data.split(":")[3]
     name = Users.query.filter_by(chat_id=other_chat_id)
     chat_id = query.from_user.id
     message_id = query.message.id
+    new_markup = InlineKeyboardMarkup([])
+    bot.edit_message_reply_markup(chat_id,message_id,reply_markup=new_markup)
     if response == "no":
         # Dont start convo
         bot.send_message(chat_id,"You decided not to have the conversation with " + name + ".")
@@ -340,7 +341,7 @@ def start_convo(query):
         
         conversation_dict[chat_id] = other_chat_id
         conversation_dict[other_chat_id] = chat_id
-        keyboard = [[InlineKeyboardButton("Accept",callback_data='end_convo:accept:' + str(other_chat_id)),InlineKeyboardButton("Reject",callback_data='end_convo:reject:' + str(other_chat_id))]]
+        keyboard = [[InlineKeyboardButton("Accept",callback_data='end_convo:accept:' + str(other_chat_id) + ":" + match_string),InlineKeyboardButton("Reject",callback_data='end_convo:reject:' + str(other_chat_id) + ":" + match_string)]]
         markup = InlineKeyboardMarkup(keyboard)
         name = Users.query.filter_by(chat_id=chat_id).first().name
         other_name = Users.query.filter_by(chat_id=other_chat_id).first().name
@@ -351,7 +352,43 @@ def start_convo(query):
         bot.register_next_step_handler(msg, converse)
 
 @bot.callback_query_handler(lambda query: query.data.split(":")[0] == 'end_convo')
-
+def endConvo(query):
+    response = query.data.split(":")[1]
+    other_chat_id = int(query.data.split(":")[2])
+    other_name = Users.query.filter_by(chat_id=other_chat_id).first().name
+    match_string = query.data.split(":")[3]
+    chat_id = query.from_user.id
+    name = Users.query.filter_by(chat_id=chat_id).first().name
+    message_id = query.message.id
+    new_markup = InlineKeyboardMarkup([])
+    bot.edit_message_reply_markup(chat_id,message_id,reply_markup=new_markup)
+    
+    if response == "accept":
+        # Process acceptance
+        match_list = match_string.split("-")
+        match_found = Match_Found.query.filter_by(finder_chat_id=int(match_list[0]),looker_chat_id=int(match_list[1]),school=match_list[2],module_code=match_list[3],semester=int(match_list[4]),section=match_list[5]).first()
+        match_found.accepted = 'A'
+        db.session.commit()
+        looking_for_member = Looking_For_Members.query.filter_by(chat_id=int(match_list[0]),school=match_list[2],module_code=match_list[3],semester=int(match_list[4])).first()
+        looking_for_member.num_members_need -= 1
+        db.session.commit()
+        url = 'https://api.telegram.org/bot' + API_KEY + '/sendMessage'
+        data = {'chat_id': other_chat_id, 'text': 'Hooray, ' + name + ' has agreed to group together with you for the project. Ending the private conversation.'}
+        requests.post(url,data).json()
+        bot.send_message(chat_id,"Congratulations! You and " + other_name + " have agreed to group together. Ending private conversation.")
+        del conversation_dict[chat_id]
+        del conversation_dict[other_chat_id]
+    else:
+        match_list = match_string.split("-")
+        match_found = Match_Found.query.filter_by(finder_chat_id=int(match_list[0]),looker_chat_id=int(match_list[1]),school=match_list[2],module_code=match_list[3],semester=int(match_list[4]),section=match_list[5]).first()
+        match_found.accepted = 'R'
+        db.session.commit()
+        url = 'https://api.telegram.org/bot' + API_KEY + '/sendMessage'
+        data = {'chat_id': other_chat_id, 'text': 'Aww, it looks like ' + name + ' has decided to reject your partnership. Better luck with another person! Ending the private conversation.'}
+        requests.post(url,data).json()
+        bot.send_message(chat_id,"Awww... It looks like you and  " + other_name + " were just not mean't to be together...in the same group. Ending private conversation.")
+        del conversation_dict[chat_id]
+        del conversation_dict[other_chat_id]
 
 def converse(message):
     chat_id = message.chat.id
@@ -401,7 +438,8 @@ def search1(chat_id):
             new_match_found = Match_Found(finder_chat_id=other_chat_id,looker_chat_id=chat_id,school=temp_find_group.getSchool(),module_code=temp_find_group.getModuleCode(),semester=temp_find_group.getSemester(), section=temp_find_group.getSection(),accepted='P')
             db.session.add(new_match_found)
             db.session.commit()
-            keyboard = [[InlineKeyboardButton("Yes",callback_data='converse:yes:' + str(other_chat_id)),InlineKeyboardButton("No",callback_data='converse:no:' + str(other_chat_id))]]
+            match_string = '-'.join([str(new_match_found.finder_chat_id),str(new_match_found.looker_chat_id),new_match_found.school,new_match_found.module_code,str(new_match_found.semester),new_match_found.section])
+            keyboard = [[InlineKeyboardButton("Yes",callback_data='converse:yes:' + str(other_chat_id) + ":" + match_string),InlineKeyboardButton("No",callback_data='converse:no:' + str(other_chat_id))]]
             markup = InlineKeyboardMarkup(keyboard)
             bot.send_message(chat_id,"We have found an available group for your following group search:\n\nSchool: "+ temp_find_group.getSchool() + "\nModule: " + temp_find_group.getModuleCode() + "\nSemester: " + temp_find_group.getSemester() + "\nSection: " + temp_find_group.getSection() + "\n\nHere are the group details:\n\nContact Person: " + name + "\nAvailable slots: " + str(group.num_members_need) + "\n\nWould you like to start a conversation?" ,reply_markup=markup)
 
@@ -422,10 +460,11 @@ def search2(chat_id):
         for member in avl_members:
             other_chat_id = member.chat_id
             name = Users.query.filter_by(chat_id=other_chat_id).first().name
-            new_match_found = Match_Found(finder_chat_id=other_chat_id,looker_chat_id=chat_id,school=temp_find_member.getSchool(),module_code=temp_find_member.getModuleCode(),semester=temp_find_member.getSemester(), section=temp_find_member.getSection(),accepted='P')
+            new_match_found = Match_Found(finder_chat_id=chat_id,looker_chat_id=other_chat_id,school=temp_find_member.getSchool(),module_code=temp_find_member.getModuleCode(),semester=temp_find_member.getSemester(), section=temp_find_member.getSection(),accepted='P')
             db.session.add(new_match_found)
             db.session.commit()
-            keyboard = [[InlineKeyboardButton("Yes",callback_data='converse:yes:' + str(other_chat_id)),InlineKeyboardButton("No",callback_data='converse:no:' + str(other_chat_id))]]
+            match_string = '-'.join([str(new_match_found.finder_chat_id),str(new_match_found.looker_chat_id),new_match_found.school,new_match_found.module_code,str(new_match_found.semester),new_match_found.section])
+            keyboard = [[InlineKeyboardButton("Yes",callback_data='converse:yes:' + str(other_chat_id) + ":" + match_string),InlineKeyboardButton("No",callback_data='converse:no:' + str(other_chat_id))]]
             markup = InlineKeyboardMarkup(keyboard)
             bot.send_message(chat_id,"We have found an available member for your following member search:\n\nSchool: "+ temp_find_member.getSchool() + "\nModule: " + temp_find_member.getModuleCode() + "\nSemester: " + temp_find_member.getSemester() + "\nSection: " + temp_find_member.getSection() + "\n\nHere are the group details:\n\nContact Person: " + name + "\n\nWould you like to start a conversation?" ,reply_markup=markup)
         
