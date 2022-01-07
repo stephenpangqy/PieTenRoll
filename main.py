@@ -5,7 +5,11 @@ from flask_sqlalchemy import SQLAlchemy
 import telebot
 from telebot.types import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 
-from telebot import types
+global find_groupmates
+global find_group
+
+find_groupmates = None
+find_group = None
 
 API_KEY = "5047659649:AAHxljzEetaON7tXSqaCiFbNXckHFoHnIrg"
 bot = telebot.TeleBot(API_KEY)
@@ -91,4 +95,40 @@ def start(message):
     message_text = f'Hello {chat_user}, welcome to GroupTogether bot. Please select if you are finding a group member or looking for a group.'
     bot.send_message(chat_id, message_text, reply_markup = keyboard)
 
+@bot.callback_query_handler(func=lambda call: True)
+def handle_callback(call):
+      """
+      Handles the execution of the respective functions upon receipt of the callback query
+      """
+      chat_id = call.message.chat.id
+      data = call.data
+      
+      if data == "Find_groupmates":
+          global find_groupmates
+          find_groupmates = 0
+          bot.send_message(chat_id, "Please type in your school name (Eg: NUS)")
+          
+      elif data == "Find_group":
+          global find_group
+          find_group = 0
+          bot.send_message(chat_id, "Please type in your school name (Eg: NUS)")
+      
+@bot.message_handler(func=lambda m: True)
+def echo_all(message):
+    global find_groupmates
+    global find_group
+
+    chat_id = message.chat.id,
+
+    if message.chat.type == 'private':
+        chat_user = message.chat.first_name
+    else:
+        chat_user = message.chat.title
+
+    if find_groupmates == 0:
+        message_text = f'I am {chat_user} \nSchool: {message.text}'
+        find_groupmates +=1
+
+
+      
 bot.infinity_polling()
