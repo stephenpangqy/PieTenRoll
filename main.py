@@ -165,6 +165,7 @@ def enter_module(message):
     chat_id = message.chat.id
     module = message.text
     print("module",module)
+    print()
     temp_find_group = temp_find_group_dict[chat_id]
     temp_find_group.setModuleCode(module)
     msg = bot.send_message(chat_id, "Please type in your section (Eg: G11)")
