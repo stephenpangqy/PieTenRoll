@@ -92,22 +92,22 @@ def start(message):
 
 @bot.callback_query_handler(lambda query: query.data == 'Find_groupmates')
 def handle_callback(call):
-  """
-  Handles the execution of the respective functions upon receipt of the callback query
-  """
-  chat_id = call.message.chat.id
+    """
+    Handles the execution of the respective functions upon receipt of the callback query
+    """
+    chat_id = call.message.chat.id
 
-  #bot.register_next_step_handler(msg,confirmEvent)
-  pass
+    #bot.register_next_step_handler(msg,confirmEvent)
+    pass
 
 @bot.callback_query_handler(lambda query: query.data == 'Find_group')
 def handle_callback(call):
-  """
-  Handles the execution of the respective functions upon receipt of the callback query
-  """
-  chat_id = call.message.chat.id
-  
-  pass
+    """
+    Handles the execution of the respective functions upon receipt of the callback query
+    """
+    chat_id = call.message.chat.id
+    
+    pass
 
 def enter_school(chat_id):
     bot.send_message(chat_id, "Please type in your school name (Eg: NUS)")
