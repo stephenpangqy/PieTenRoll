@@ -71,30 +71,69 @@ def start(message):
     Command that welcomes the user and configures the initial setup
     """
     chat_id = message.chat.id
-    if message.chat.type == 'private':
-        chat_user = message.chat.first_name
-    else:
-        chat_user = message.chat.title
-    
-    bot.send_sticker(
-        chat_id=chat_id, 
-        data='CAACAgUAAxkBAAEDoRJh1y0KgigTU87x7QYrbKJNbfDavQACawMAAlobywF60Koi6G4EECME'
-    )
+    id_Exists = idExists(chat_id)
+    if id_Exists:
+        username = Users.query.filter_by(chat_id=chat_id).first().name
+        bot.send_sticker(
+            chat_id=chat_id, 
+            data='CAACAgUAAxkBAAEDoRJh1y0KgigTU87x7QYrbKJNbfDavQACawMAAlobywF60Koi6G4EECME'
+        )
 
-    buttons = [
-        InlineKeyboardButton(
-        text = "Find groupmates",
-        callback_data = "Find_groupmates"
-    ),
-        InlineKeyboardButton(
-        text = "Find group",
-        callback_data = "Find_group"
-    )]
-    keyboard = InlineKeyboardMarkup()
-    for button in buttons:
-        keyboard.add(button)
-    message_text = f'Welcome back {chat_user}, Please select if you are finding a group member or looking for a group.'
-    bot.send_message(chat_id, message_text, reply_markup = keyboard)
+        buttons = [
+            InlineKeyboardButton(
+            text = "Find groupmates",
+            callback_data = "Find_groupmates"
+        ),
+            InlineKeyboardButton(
+            text = "Find group",
+            callback_data = "Find_group"
+        )]
+        keyboard = InlineKeyboardMarkup()
+        for button in buttons:
+            keyboard.add(button)
+        message_text = f'Welcome back {username}, Please select if you are finding a group member or looking for a group.'
+        bot.send_message(chat_id, message_text, reply_markup = keyboard)
+    else:
+        bot.send_message(chat_id, f'Welcome to GroupTogether bot, We help you find your teammates with ease!')
+        msg = bot.send_message(message.chat.id,"It looks like this is your first time using me. Please enter your name in the next chat bubble; this will be the name that others see you as.")
+        bot.register_next_step_handler(msg, register)
+
+def register(message):
+    chat_id = message.chat.id
+    name = message.text.strip()
+    if name == "":
+        msg = bot.reply_to(message,'Your name cannot be empty. Please enter your name again!')
+        bot.register_next_step_handler(msg,register)
+        return
+    elif len(name) > 100:
+        msg = bot.reply_to(message,"Your name cannot be longer than 100 characters. Please enter your name again!")
+        bot.register_next_step_handler(msg,register)
+        return
+    else:
+        new_user = Users(chat_id=chat_id,name=name)
+        db.session.add(new_user)
+        db.session.commit()
+        bot.reply_to(message,"Thank you, " + name + ", you have successfully registered.")
+        
+        bot.send_sticker(
+            chat_id=chat_id, 
+            data='CAACAgUAAxkBAAEDoRJh1y0KgigTU87x7QYrbKJNbfDavQACawMAAlobywF60Koi6G4EECME'
+        )
+
+        buttons = [
+            InlineKeyboardButton(
+            text = "Find groupmates",
+            callback_data = "Find_groupmates"
+        ),
+            InlineKeyboardButton(
+            text = "Find group",
+            callback_data = "Find_group"
+        )]
+        keyboard = InlineKeyboardMarkup()
+        for button in buttons:
+            keyboard.add(button)
+        message_text = f'Now, Please select if you are finding a group member or looking for a group.'
+        bot.send_message(chat_id, message_text, reply_markup = keyboard)
 
 @bot.callback_query_handler(lambda query: query.data == 'Find_groupmates')
 def handle_callback(call):
