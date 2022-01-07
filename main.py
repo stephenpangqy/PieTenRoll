@@ -76,7 +76,7 @@ class Temp_Find_Group:
     def setModuleCode(self,module_code):
         self.module_code = module_code
     def setSemester(self,sem):
-        self.module_code = sem
+        self.semester = sem
     def setSection(self,section):
         self.section = section
     def getSchool(self):
@@ -163,7 +163,7 @@ def enter_school(message):
 
 def enter_module(message):
     chat_id = message.chat.id
-    module = message.text
+    module = message.text.strip()
     print("module",module)
     print()
     temp_find_group = temp_find_group_dict[chat_id]
@@ -183,11 +183,12 @@ def enter_section(message):
 
 def enter_semester(message):
     chat_id = message.chat.id
-    semester = message.text
+    semester = message.text.strip()
     print("semester",semester)
     temp_find_group = temp_find_group_dict[chat_id]
     temp_find_group.setSemester(semester)
-    
+    print("getSemester()",temp_find_group.getSemester())
+    print("getModuleCode",temp_find_group.getModuleCode())
     # Add to DB
     new_record = Looking_For_Group(chat_id=chat_id,school=temp_find_group.getSchool(),module_code=temp_find_group.getModuleCode(),semester=temp_find_group.getSemester(),section=temp_find_group.getSection())
     db.session.add(new_record)
