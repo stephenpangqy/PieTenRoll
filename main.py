@@ -5,6 +5,11 @@ from flask_sqlalchemy import SQLAlchemy
 import telebot
 from telebot.types import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 
+global find_groupmates
+global find_group
+
+find_groupmates = None
+find_group = None
 
 API_KEY = "5047659649:AAHxljzEetaON7tXSqaCiFbNXckHFoHnIrg"
 bot = telebot.TeleBot(API_KEY)
@@ -16,7 +21,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 299}
 
 db = SQLAlchemy(app)
-
 class Users(db.Model):
     __tablename__ = 'users'
 
@@ -66,9 +70,11 @@ def start(message):
     """
     Command that welcomes the user and configures the initial setup
     """
-    
     chat_id = message.chat.id
-    
+    if message.chat.type == 'private':
+        chat_user = message.chat.first_name
+    else:
+        chat_user = message.chat.title
     
     bot.send_sticker(
         chat_id=chat_id, 
@@ -92,22 +98,22 @@ def start(message):
 
 @bot.callback_query_handler(lambda query: query.data == 'Find_groupmates')
 def handle_callback(call):
-    """
-    Handles the execution of the respective functions upon receipt of the callback query
-    """
-    chat_id = call.message.chat.id
+  """
+  Handles the execution of the respective functions upon receipt of the callback query
+  """
+  chat_id = call.message.chat.id
 
-    #bot.register_next_step_handler(msg,confirmEvent)
-    pass
+  #bot.register_next_step_handler(msg,confirmEvent)
+  pass
 
 @bot.callback_query_handler(lambda query: query.data == 'Find_group')
 def handle_callback(call):
-    """
-    Handles the execution of the respective functions upon receipt of the callback query
-    """
-    chat_id = call.message.chat.id
-    
-    pass
+  """
+  Handles the execution of the respective functions upon receipt of the callback query
+  """
+  chat_id = call.message.chat.id
+  
+  pass
 
 def enter_school(chat_id):
     bot.send_message(chat_id, "Please type in your school name (Eg: NUS)")
