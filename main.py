@@ -5,11 +5,6 @@ from flask_sqlalchemy import SQLAlchemy
 import telebot
 from telebot.types import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 
-global find_groupmates
-global find_group
-
-find_groupmates = None
-find_group = None
 
 API_KEY = "5047659649:AAHxljzEetaON7tXSqaCiFbNXckHFoHnIrg"
 bot = telebot.TeleBot(API_KEY)
@@ -21,6 +16,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 299}
 
 db = SQLAlchemy(app)
+
 class Users(db.Model):
     __tablename__ = 'users'
 
@@ -70,11 +66,9 @@ def start(message):
     """
     Command that welcomes the user and configures the initial setup
     """
+    
     chat_id = message.chat.id
-    if message.chat.type == 'private':
-        chat_user = message.chat.first_name
-    else:
-        chat_user = message.chat.title
+    
     
     bot.send_sticker(
         chat_id=chat_id, 
