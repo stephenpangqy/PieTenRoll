@@ -5,13 +5,9 @@ from flask_sqlalchemy import SQLAlchemy
 import telebot
 from telebot.types import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 
-global find_groupmates
-global find_group
 
-find_groupmates = None
-find_group = None
 
-API_KEY = "5047659649:AAHxljzEetaON7tXSqaCiFbNXckHFoHnIr"
+API_KEY = "5047659649:AAHxljzEetaON7tXSqaCiFbNXckHFoHnIrg"
 bot = telebot.TeleBot(API_KEY)
 
 
@@ -66,6 +62,8 @@ def idExists(chat_id):
 
 temp_find_group_dict = {}
 temp_find_member_dict = {}
+conversation_dict = {}
+
 
 class Temp_Find_Group:
     def __init__(self,school):
@@ -126,11 +124,12 @@ def start(message):
     Command that welcomes the user and configures the initial setup
     """
     chat_id = message.chat.id
-    if message.chat.type == 'private':
-        chat_user = message.chat.first_name
-    else:
-        chat_user = message.chat.title
-    
+    id_exist = idExists(chat_id)
+    if not id_exist:
+        bot.send_message(chat_id,"Welcome to GroupTogether, I can help make your project group searching life a breeze.")
+        msg = bot.send_message(chat_id,"It looks like it is your first time using me. Please enter your name in the next chat bubble. This name will be saved and used to identify yourself to others.")
+        bot.register_next_step_handler(msg,register)
+        return
     bot.send_sticker(
         chat_id=chat_id, 
         data='CAACAgUAAxkBAAEDoRJh1y0KgigTU87x7QYrbKJNbfDavQACawMAAlobywF60Koi6G4EECME'
@@ -148,9 +147,51 @@ def start(message):
     keyboard = InlineKeyboardMarkup()
     for button in buttons:
         keyboard.add(button)
-    message_text = f'Welcome back {chat_user}, Please select if you are finding a group member or looking for a group.'
+    message_text = f'Welcome back , Please select if you are finding a group member or looking for a group.'
     bot.send_message(chat_id, message_text, reply_markup = keyboard)
+    #### TEST #################################
+    other_chat_id = 839535647
+    keyboard = [[InlineKeyboardButton("Accept",callback_data='converse:yes:' + str(other_chat_id)),InlineKeyboardButton("reject",callback_data='converse:no:' + str(other_chat_id))]]
+    markup = InlineKeyboardMarkup(keyboard)
+    bot.send_message(chat_id,"Would you like convo Ben?",reply_markup=markup)
+    
+def register(message):
+    chat_id = message.chat.id
+    name = message.text.strip()
+    if name == "":
+        msg = bot.reply_to(message,'Your name cannot be empty. Please enter your name again!')
+        bot.register_next_step_handler(msg,register)
+        return
+    elif len(name) > 100:
+        msg = bot.reply_to(message,"Your name cannot be longer than 100 characters. Please enter your name again!")
+        bot.register_next_step_handler(msg,register)
+        return
+    else:
+        new_user = Users(chat_id=chat_id,name=name)
+        db.session.add(new_user)
+        db.session.commit()
+        bot.reply_to(message,"Thank you, " + name + ", you have successfully registered.")
+        bot.send_sticker(
+        chat_id=chat_id, 
+        data='CAACAgUAAxkBAAEDoRJh1y0KgigTU87x7QYrbKJNbfDavQACawMAAlobywF60Koi6G4EECME'
+        )
 
+        buttons = [
+            InlineKeyboardButton(
+            text = "Find groupmates",
+            callback_data = "Find_groupmates"
+        ),
+            InlineKeyboardButton(
+            text = "Find group",
+            callback_data = "Find_group"
+        )]
+        keyboard = InlineKeyboardMarkup()
+        for button in buttons:
+            keyboard.add(button)
+        message_text = f'Now, Please select if you are finding a group member or looking for a group.'
+        bot.send_message(chat_id, message_text, reply_markup = keyboard)
+    
+    
 @bot.callback_query_handler(lambda query: query.data == 'Find_groupmates')
 def handle_callback(call):
     """
@@ -210,8 +251,6 @@ def enter_school2(message):
 def enter_module1(message):
     chat_id = message.chat.id
     module = message.text.strip()
-    print("module",module)
-    print()
     temp_find_group = temp_find_group_dict[chat_id]
     temp_find_group.setModuleCode(module)
     msg = bot.send_message(chat_id, "Please type in your section (Eg: G11)")
@@ -220,8 +259,6 @@ def enter_module1(message):
 def enter_module2(message):
     chat_id = message.chat.id
     module = message.text.strip()
-    print("module",module)
-    print()
     temp_find_member = temp_find_member_dict[chat_id]
     temp_find_member.setModuleCode(module)
     msg = bot.send_message(chat_id, "Please type in your section (Eg: G11)")
@@ -258,7 +295,7 @@ def enter_semester1(message):
     db.session.add(new_record)
     db.session.commit()
     bot.send_message(chat_id, "Your group search request has been successfully created. Now we will search for available groups for you...")
-    # Search
+    # Search Code here
 
 def enter_semester2(message):
     chat_id = message.chat.id
@@ -279,5 +316,66 @@ def enter_avail(message):
     db.session.add(new_record)
     db.session.commit()
     bot.send_message(chat_id, "Your group search request has been successfully created. Now we will search for available groups for you...")
+    # Search Code Here
+
+@bot.callback_query_handler(lambda query: query.data.split(":")[0] == 'converse')
+def start_convo(query):
+    response = query.data.split(":")[1]
+    other_chat_id = int(query.data.split(":")[2])
+    chat_id = query.from_user.id
+    message_id = query.message.id
+    if response == "no":
+        # Dont start convo
+        bot.send_message(chat_id,"You decided not to have the conversation.")
+        new_markup = InlineKeyboardMarkup([])
+        bot.edit_message_reply_markup(chat_id,message_id,reply_markup=new_markup)
+    else:
+        # Check if ongoing convo
+        if chat_id in conversation_dict:
+            bot.send_message(chat_id,"You are currently in an ongoing conversation, please end this one before continuing another.")
+            return
+        
+        conversation_dict[chat_id] = other_chat_id
+        conversation_dict[other_chat_id] = chat_id
+        keyboard = [[InlineKeyboardButton("Accept",callback_data='end_convo:accept:' + str(other_chat_id)),InlineKeyboardButton("reject",callback_data='end_convo:reject:' + str(other_chat_id))]]
+        markup = InlineKeyboardMarkup(keyboard)
+        name = Users.query.filter_by(chat_id=chat_id).first().name
+        other_name = Users.query.filter_by(chat_id=other_chat_id).first().name
+        msg = bot.send_message(chat_id,'You are now in a conversation with '+ other_name +', Any text you type from here on will be sent to the other person.\n\nIf you have made a decision on whether to team up with the person, click on Accept or Reject to end the conversation.',reply_markup=markup)
+        url = 'https://api.telegram.org/bot' + API_KEY + '/sendMessage'
+        data = {'chat_id': other_chat_id, 'text': 'We have found a match for you with ' + name + '. To start talking to them, type the command /converse'}
+        requests.post(url,data).json()
+        bot.register_next_step_handler(msg, converse)
+        
+def converse(message):
+    chat_id = message.chat.id
+    chat_message = message.text
+    if chat_id not in conversation_dict:
+        bot.send_message(chat_id,"You are not in a conversation!")
+    else:
+        other_chat_id = conversation_dict[chat_id]
+        url = 'https://api.telegram.org/bot' + API_KEY + '/sendMessage'
+        data = {'chat_id': other_chat_id, 'text': chat_message}
+        requests.post(url,data).json()
+        msg = bot.reply_to(message,"Message sent!")
+        print(conversation_dict)
+        bot.register_next_step_handler(msg, converse)
+        
+@bot.message_handler(commands=['converse'])
+def startConvo(message):
+    chat_id = message.chat.id
+    if chat_id not in conversation_dict:
+        bot.send_message(chat_id,"You are not in a conversation!")
+    else:
+        other_chat_id = conversation_dict[chat_id]
+        keyboard = [[InlineKeyboardButton("Accept",callback_data='end_convo:accept:' + str(other_chat_id)),InlineKeyboardButton("reject",callback_data='end_convo:reject:' + str(other_chat_id))]]
+        markup = InlineKeyboardMarkup(keyboard)
+        name = Users.query.filter_by(chat_id=chat_id).first().name
+        other_name = Users.query.filter_by(chat_id=other_chat_id).first().name
+        msg = bot.send_message(chat_id,'You are now in a conversation with '+ other_name +', Any text you type from here on will be sent to the other person.\n\nIf you have made a decision on whether to team up with the person, click on Accept or Reject to end the conversation.',reply_markup=markup)
+        url = 'https://api.telegram.org/bot' + API_KEY + '/sendMessage'
+        data = {'chat_id': other_chat_id, 'text': name + ' is now online. You can start talking to them.'}
+        requests.post(url,data).json()
+        bot.register_next_step_handler(msg,converse)
 
 bot.infinity_polling()
