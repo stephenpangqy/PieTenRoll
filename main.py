@@ -13,7 +13,7 @@ bot = telebot.TeleBot(API_KEY)
 
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://admin:root12345@grouptogetherbot.cy4w4hr2xk8p.us-east-1.rds.amazonaws.com:3306/grouptogetherdb'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://admin:b075363cc85579@us-cdbr-east-05.cleardb.net:3306/grouptogetherdb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 299}
 
