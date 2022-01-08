@@ -4,3 +4,4 @@ praw
 flask
 SQLAlchemy
 flask_sqlalchemy
+requests
