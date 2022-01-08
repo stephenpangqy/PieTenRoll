@@ -1,6 +1,6 @@
-drop database if exists grouptogetherDB;
-create database grouptogetherDB;
-use grouptogetherDB;
+drop database if exists grouptogetherdb;
+create database grouptogetherdb;
+use grouptogetherdb;
 
 create table users (
 	chat_id int not null primary key,

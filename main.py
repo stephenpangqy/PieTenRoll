@@ -13,7 +13,7 @@ bot = telebot.TeleBot(API_KEY)
 
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://root@localhost:3306/grouptogetherdb'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://admin:root12345@grouptogetherbot.cy4w4hr2xk8p.us-east-1.rds.amazonaws.com:3306/grouptogetherdb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 299}
 
@@ -122,6 +122,7 @@ bot.set_my_commands([
     BotCommand('view', 'View your list of groups/members you are finding!'),
     BotCommand('edit', 'Edit your group and/or member search requests!'),
     BotCommand('converse', 'Use this to start talking to someone who has initiate a conversation with you.'),
+    BotCommand('search', 'Performs a search for members and groups for all your existing requests.')
 ])
 
 @bot.message_handler(commands=['start'])
