@@ -8,7 +8,7 @@ from telebot.types import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 
 
 API_KEY = "5011942238:AAHj-8qXwf7Aw1C0cWEkJ2qqgsjls7iuRAU"
-# For testing purpose below
+
 bot = telebot.TeleBot(API_KEY)
 
 
@@ -66,6 +66,7 @@ temp_find_member_dict = {}
 conversation_dict = {}
 accept_dict = {} # Key - (finder,looker), Value - 0, 1, 2 [Represents the number of accepts, with 2 being that both users have accepted]
 match_string_dict = {}
+temp_data_string_dict = {}
 
 class Temp_Find_Group:
     def __init__(self,school):
@@ -119,6 +120,8 @@ class Temp_Find_Member:
 bot.set_my_commands([
     BotCommand('start', 'Start finding your groupmates now!'),
     BotCommand('view', 'View your list of groups/members you are finding!'),
+    BotCommand('edit', 'Edit your group and/or member search requests!'),
+    BotCommand('converse', 'Use this to start talking to someone who has initiate a conversation with you.'),
 ])
 
 @bot.message_handler(commands=['start'])
@@ -176,11 +179,11 @@ def register(message):
 
         buttons = [
             InlineKeyboardButton(
-            text = "Find groupmates",
+            text = "Find Members",
             callback_data = "Find_groupmates"
         ),
             InlineKeyboardButton(
-            text = "Find group",
+            text = "Find Group",
             callback_data = "Find_group"
         )]
         keyboard = InlineKeyboardMarkup()
@@ -214,8 +217,8 @@ def view(message):
                 module_code = group.module_code
                 semester = group.semester
                 section = group.section
-                # output += school + " Semester " + str(semester) + " " + module_code +  " " + section + "\n"
-                output += " Semester: *" + str(semester) + "* Module: *" + module_code +  "* Section:* " + section + "*\n"
+                output += "School: *" + school + "* "
+                output += "Semester: *" + str(semester) + "* Module: *" + module_code +  "* Section:* " + section + "*\n"
         
         members = Looking_For_Members.query.filter_by(chat_id = chat_id)
         
@@ -232,14 +235,203 @@ def view(message):
                 section = memb.section
                 num_mem_need = memb.num_members_need
                 
-                # output += school + " semester " + str(semester) + " " + module_code +  " " + section + ": " + str(num_mem_need) + "\n"
-                output += " Semester: *" + str(semester) + "* Module: *" + module_code +  "* Section:* " + section + "* Num remaining: *"+ str(num_mem_need) + "* \n"
+                output += "School: *" + school + "* "
+                output += "Semester: *" + str(semester) + "* Module: *" + module_code +  "* Section:* " + section + "* Slots: *"+ str(num_mem_need) + "* \n"
 
         if not flag1 and not flag2:
             bot.send_message(chat_id, "~ Nothing to view ~")
         else:
             bot.send_message(chat_id, output, parse_mode= 'Markdown')
+            
 
+# Edit requests made
+@bot.message_handler(commands=['edit'])
+def editRequests(message):
+    chat_id = message.chat.id
+    id_exist = idExists(chat_id)
+    
+    count = 1
+    buttons = []
+    
+    flag1 = False
+    flag2 = False
+    
+    if not id_exist:
+        start(message)
+    else:
+        output = ""
+        groups = Looking_For_Group.query.filter_by(chat_id = chat_id)
+        
+        for group in groups:
+            flag1 = True
+            break
+        
+        if flag1:
+            output += "*Looking for Groups* :\n\n"
+            for group in groups:
+                school = group.school
+                module_code = group.module_code
+                semester = group.semester
+                section = group.section
+                output += str(count) + ". School: *" + school + "* "
+                output += " Semester: *" + str(semester) + "* Module: *" + module_code +  "* Section:* " + section + "*\n"
+                data_string = "-".join([school,module_code,str(semester),section])
+                button = InlineKeyboardButton(
+                    text = str(count),
+                    callback_data = "edit_group:" + data_string
+                )
+                buttons.append(button)
+                count += 1
+        
+        members = Looking_For_Members.query.filter_by(chat_id = chat_id)
+        
+        for memb in members:
+            flag2 = True
+            break
+        
+        if flag2:
+            output += "\n *Looking for Members* :\n\n"
+            for memb in members:
+                school = memb.school
+                module_code = memb.module_code
+                semester = memb.semester
+                section = memb.section
+                num_mem_need = memb.num_members_need
+                
+                output += str(count) + ". School: *" + school + "* "
+                output += "Semester: *" + str(semester) + "* Module: *" + module_code +  "* Section:* " + section + "* Slots: *"+ str(num_mem_need) + "* \n"
+                count += 1
+                data_string = "-".join([school,module_code,str(semester),section,str(num_mem_need)])
+                button = InlineKeyboardButton(
+                    text = str(count),
+                    callback_data = "edit_mem:" + data_string
+                )
+                buttons.append(button)
+
+        if not flag1 and not flag2:
+            bot.send_message(chat_id, "You have no requests to edit.")
+        else:
+            bot.send_message(chat_id, output, parse_mode= 'Markdown')
+            keyboard = []
+            row_limit = 4
+            row = []
+            for button in buttons:
+                row.append(button)
+                if len(row) == row_limit:
+                    keyboard.append(row)
+                    row = []
+            if len(row) > 0:
+                keyboard.append(row)
+            message_text = f'To edit a search request, please click on the button with the corresponding number to the request you want to edit.'
+            bot.send_message(chat_id, message_text, reply_markup = InlineKeyboardMarkup(keyboard),parse_mode= 'Markdown')
+
+@bot.callback_query_handler(lambda query: query.data.split(":")[0] == 'edit_group')
+def editRequest(query):
+    data_string = query.data.split(":")[1]
+    chat_id = query.from_user.id
+    message_id = query.message.id
+    new_markup = InlineKeyboardMarkup([])
+    bot.edit_message_reply_markup(chat_id,message_id,reply_markup=new_markup)
+    output = "* Looking For Group request *\n\n"
+    data_list = data_string.split("-")
+    output += "School: *" + data_list[0] + "*\n"
+    output += "Module Code: *" + data_list[1] + "*\n"
+    output += "Semester: *" + data_list[2] + "*\n"
+    output += "Section: *" + data_list[3] + "*\n\n"
+    output += "What would you like to do?"
+    keyboard = [[InlineKeyboardButton(
+                    text = "Delete Request",
+                    callback_data = "del_group:" + data_string
+                )]]
+    bot.send_message(chat_id,output,reply_markup=InlineKeyboardMarkup(keyboard),parse_mode= 'Markdown')
+    
+@bot.callback_query_handler(lambda query: query.data.split(":")[0] == 'del_group')
+def delGroup(query):
+    data_string = query.data.split(":")[1]
+    data_list = data_string.split("-")
+    chat_id = query.from_user.id
+    message_id = query.message.id
+    new_markup = InlineKeyboardMarkup([])
+    bot.edit_message_reply_markup(chat_id,message_id,reply_markup=new_markup)
+    group_look = Looking_For_Group.query.filter_by(chat_id=chat_id,school=data_list[0],module_code=data_list[1],semester=int(data_list[2]),section=data_list[3]).first()
+    db.session.delete(group_look)
+    db.session.commit()
+    bot.send_message(chat_id,"Request has been deleted successfully!")
+    
+@bot.callback_query_handler(lambda query: query.data.split(":")[0] == 'edit_mem')
+def editMem(query):
+    data_string = query.data.split(":")[1]
+    chat_id = query.from_user.id
+    message_id = query.message.id
+    new_markup = InlineKeyboardMarkup([])
+    bot.edit_message_reply_markup(chat_id,message_id,reply_markup=new_markup)
+    output = "* Looking For Member request *\n\n"
+    data_list = data_string.split("-")
+    output += "School: *" + data_list[0] + "*\n"
+    output += "Module Code: *" + data_list[1] + "*\n"
+    output += "Semester: *" + data_list[2] + "*\n"
+    output += "Section: *" + data_list[3] + "*\n"
+    output += "Available Slots: *" + data_list[4] + "*\n"
+    output += "What would you like to do?"
+    keyboard = [[InlineKeyboardButton(
+                    text = "Edit Available Slots",
+                    callback_data = "edit_avl:" + data_string
+                ),
+                InlineKeyboardButton(
+                    text = "Delete Request",
+                    callback_data = "del_mem:" + data_string
+                )]]
+    bot.send_message(chat_id,output,reply_markup=InlineKeyboardMarkup(keyboard),parse_mode= 'Markdown')
+    
+@bot.callback_query_handler(lambda query: query.data.split(":")[0] == 'del_mem')
+def delGroup(query):
+    data_string = query.data.split(":")[1]
+    data_list = data_string.split("-")
+    chat_id = query.from_user.id
+    message_id = query.message.id
+    new_markup = InlineKeyboardMarkup([])
+    bot.edit_message_reply_markup(chat_id,message_id,reply_markup=new_markup)
+    group_look = Looking_For_Members.query.filter_by(chat_id=chat_id,school=data_list[0],module_code=data_list[1],semester=int(data_list[2]),section=data_list[3]).first()
+    db.session.delete(group_look)
+    db.session.commit()
+    bot.send_message(chat_id,"Request has been deleted successfully!")
+
+@bot.callback_query_handler(lambda query: query.data.split(":")[0] == 'edit_avl')
+def edit_avl(query):
+    chat_id = query.from_user.id
+    data_string = query.data.split(":")[1]
+    temp_data_string_dict[chat_id] = data_string
+    message_id = query.message.id
+    new_markup = InlineKeyboardMarkup([])
+    bot.edit_message_reply_markup(chat_id,message_id,reply_markup=new_markup)
+    msg = bot.send_message(chat_id,"Please enter the new available number of slots in your group in the next bubble. Please do NOT indicate 0; delete the request if that is the case.")
+    bot.register_next_step_handler(msg,updateAvl)
+    
+def updateAvl(message):
+    chat_id = message.chat.id
+    new_num = message.text
+    digits = '1234567890'
+    # check if its a valid non-zero integer
+    for ch in new_num:
+        if ch not in digits:
+            msg = bot.send_message(chat_id,"Please enter a valid integer again!")
+            bot.register_next_step_handler(msg,updateAvl)
+            return
+    if new_num == "0":
+        msg = bot.send_message(chat_id,"Your available slots cannot be zero. Please enter a new number.")
+        bot.register_next_step_handler(msg,updateAvl)
+        return
+    
+    data_string = temp_data_string_dict[chat_id]
+    data_list = data_string.split("-")
+    member_look = Looking_For_Members.query.filter_by(chat_id=chat_id,school=data_list[0],module_code=data_list[1],semester=int(data_list[2]),section=data_list[3]).first()
+    member_look.num_members_need = int(new_num)
+    db.session.commit()
+    bot.send_message(chat_id,"Your available slots has been updated successfully.")
+    del temp_data_string_dict[chat_id]
+    
+    
+    
 
 @bot.callback_query_handler(lambda query: query.data == 'Find_groupmates')
 def handle_callback(call):
