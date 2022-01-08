@@ -7,7 +7,9 @@ from telebot.types import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 
 
 
-API_KEY = "5011942238:AAHj-8qXwf7Aw1C0cWEkJ2qqgsjls7iuRAU"
+#API_KEY = "5011942238:AAHj-8qXwf7Aw1C0cWEkJ2qqgsjls7iuRAU"
+# For testing purpose below
+API_KEY = "1544923513:AAEWxJ3k02PputNs6ijxnQnB8lo7kIsfxNo"
 bot = telebot.TeleBot(API_KEY)
 
 
@@ -486,7 +488,7 @@ def startConvo(message):
         requests.post(url,data).json()
         bot.register_next_step_handler(msg,converse)
 
-# Search Code Here
+# Search Code
 def search1(chat_id):
     
     temp_find_group = temp_find_group_dict[chat_id]
@@ -530,7 +532,69 @@ def search2(chat_id):
             match_string = '-'.join([str(new_match_found.finder_chat_id),str(new_match_found.looker_chat_id),new_match_found.school,new_match_found.module_code,str(new_match_found.semester),new_match_found.section])
             keyboard = [[InlineKeyboardButton("Yes",callback_data='converse:yes:' + str(other_chat_id) + ":" + match_string),InlineKeyboardButton("No",callback_data='converse:no:' + str(other_chat_id))]]
             markup = InlineKeyboardMarkup(keyboard)
-            bot.send_message(chat_id,"We have found an available member for your following member search:\n\nSchool: "+ temp_find_member.getSchool() + "\nModule: " + temp_find_member.getModuleCode() + "\nSemester: " + temp_find_member.getSemester() + "\nSection: " + temp_find_member.getSection() + "\n\nHere are the group details:\n\nContact Person: " + name + "\n\nWould you like to start a conversation?" ,reply_markup=markup)
+            bot.send_message(chat_id,"We have found an available member for your following member search:\n\nSchool: "+ temp_find_member.getSchool() + "\nModule: " + temp_find_member.getModuleCode() + "\nSemester: " + temp_find_member.getSemester() + "\nSection: " + temp_find_member.getSection() + "\n\nHere are their details:\n\nContact Person: " + name + "\n\nWould you like to start a conversation?" ,reply_markup=markup)
         
     del temp_find_member_dict[chat_id]
+    
+@bot.message_handler(commands=['search'])
+def performSearch(message):
+    # Perform group search
+    chat_id = message.chat.id
+    looking_for_group_list = Looking_For_Group.query.filter_by(chat_id=chat_id)
+    group_found = False
+    for l in looking_for_group_list:
+        group_found = True
+        break
+    if group_found:
+        bot.send_message(chat_id,"Searching for groups based on your requests...")
+        count = 0
+        for group_look in looking_for_group_list:
+            avl_groups = Looking_For_Members.query.filter_by(school=group_look.school,module_code=group_look.module_code,semester=group_look.semester, section=group_look.section)
+            for group in avl_groups:
+                other_chat_id = group.chat_id
+                name = Users.query.filter_by(chat_id=other_chat_id).first().name
+                # check if match_Found exists
+                new_match_found = Match_Found.query.filter_by(finder_chat_id=other_chat_id,looker_chat_id=chat_id,school=group_look.school,module_code=group_look.module_code,semester=group_look.semester, section=group_look.section).first()
+                if not new_match_found:
+                    new_match_found = Match_Found(finder_chat_id=other_chat_id,looker_chat_id=chat_id,school=group_look.school,module_code=group_look.module_code,semester=group_look.semester, section=group_look.section,accepted='P')
+                    db.session.add(new_match_found)
+                    db.session.commit()
+                match_string = '-'.join([str(new_match_found.finder_chat_id),str(new_match_found.looker_chat_id),new_match_found.school,new_match_found.module_code,str(new_match_found.semester),new_match_found.section])
+                keyboard = [[InlineKeyboardButton("Yes",callback_data='converse:yes:' + str(other_chat_id) + ":" + match_string),InlineKeyboardButton("No",callback_data='converse:no:' + str(other_chat_id))]]
+                markup = InlineKeyboardMarkup(keyboard)
+                bot.send_message(chat_id,"We have found an available group for your following group search:\n\nSchool: "+ group_look.school + "\nModule: " + group_look.module_code + "\nSemester: " + str(group_look.semester) + "\nSection: " + group_look.section + "\n\nHere are the group details:\n\nContact Person: " + name + "\nAvailable slots: " + str(group.num_members_need) + "\n\nWould you like to start a conversation?" ,reply_markup=markup)
+                count += 1
+                
+        if count == 0:
+            bot.send_message(chat_id,"Sorry, it looks like that there are no available groups that match your requests.")
+    
+    # Perform Member search
+    looking_for_member_list = Looking_For_Members.query.filter_by(chat_id=chat_id)
+    member_found = False
+    for l in looking_for_member_list:
+        member_found = True
+        break
+    if member_found:
+        bot.send_message(chat_id,"Searching for members based on your requests...")
+        count = 0
+        for member_look in looking_for_member_list:
+            avl_groups = Looking_For_Group.query.filter_by(school=member_look.school,module_code=member_look.module_code,semester=member_look.semester, section=member_look.section)
+            for group in avl_groups:
+                other_chat_id = group.chat_id
+                name = Users.query.filter_by(chat_id=other_chat_id).first().name
+                new_match_found = Match_Found.query.filter_by(finder_chat_id=chat_id,looker_chat_id=other_chat_id,school=member_look.school,module_code=member_look.module_code,semester=member_look.semester, section=member_look.section).first()
+                if not new_match_found:
+                    new_match_found = Match_Found(finder_chat_id=chat_id,looker_chat_id=other_chat_id,school=member_look.school,module_code=member_look.module_code,semester=member_look.semester, section=member_look.section,accepted='P')
+                    db.session.add(new_match_found)
+                    db.session.commit()
+                match_string = '-'.join([str(new_match_found.finder_chat_id),str(new_match_found.looker_chat_id),new_match_found.school,new_match_found.module_code,str(new_match_found.semester),new_match_found.section])
+                keyboard = [[InlineKeyboardButton("Yes",callback_data='converse:yes:' + str(other_chat_id) + ":" + match_string),InlineKeyboardButton("No",callback_data='converse:no:' + str(other_chat_id))]]
+                markup = InlineKeyboardMarkup(keyboard)
+                bot.send_message(chat_id,"We have found an available member for your following member search:\n\nSchool: "+ member_look.school + "\nModule: " + member_look.module_code + "\nSemester: " + str(member_look.semester) + "\nSection: " + member_look.section + "\n\nHere are their details:\n\nContact Person: " + name + "\n\nWould you like to start a conversation?" ,reply_markup=markup)
+                count += 1
+                
+        if count == 0:
+            bot.send_message(chat_id,"Sorry, it looks like that there are no available members that match your requests.")
+    
+
 bot.infinity_polling()
