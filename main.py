@@ -6,10 +6,10 @@ import telebot
 from telebot.types import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 
 
-
+# Telegram Bot accept_dict[(int(match_list[0]),int(match_list[1]))]
 API_KEY = "5011942238:AAHj-8qXwf7Aw1C0cWEkJ2qqgsjls7iuRAU"
 
-bot = telebot.TeleBot(API_KEY)
+bot = telebot.TeleBot(API_KEY) 
 
 
 app = Flask(__name__)
