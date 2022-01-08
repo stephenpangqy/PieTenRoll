@@ -6,14 +6,14 @@ import telebot
 from telebot.types import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 
 
-# Telegram Bot accept_dict[(int(match_list[0]),int(match_list[1]))]
+# Telegram Bot
 API_KEY = "5011942238:AAHj-8qXwf7Aw1C0cWEkJ2qqgsjls7iuRAU"
 
 bot = telebot.TeleBot(API_KEY) 
 
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://b075363cc85579:1ae6cc1e@us-cdbr-east-05.cleardb.net/heroku_54c137601a2be94'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://admin:root12345@grouptogetherbot.cy4w4hr2xk8p.us-east-1.rds.amazonaws.com:3306/grouptogetherdb'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 299}
 
