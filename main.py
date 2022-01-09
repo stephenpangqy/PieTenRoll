@@ -144,7 +144,8 @@ def start(message):
     )
     '''
     sti = open('images/sticker.webp', 'rb')
-    #bot.send_sticker(chat_id, sti)
+    bot.send_sticker(chat_id, sti)
+    bot.send_sticker(chat_id, "FILEID")
 
     buttons = [
         InlineKeyboardButton(
