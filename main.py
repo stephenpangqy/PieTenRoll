@@ -138,13 +138,12 @@ def start(message):
         bot.register_next_step_handler(msg,register)
         return
     
+    '''
     bot.send_sticker(
         chat_id,'CAACAgUAAxkBAAEDoRJh1y0KgigTU87x7QYrbKJNbfDavQACawMAAlobywF60Koi6G4EECME'
     )
     '''
-    sti = open('images/sticker.webp', 'rb')
-    bot.send_sticker(chat_id, sti)
-    '''
+    
     buttons = [
         InlineKeyboardButton(
         text = "Find groupmates",
