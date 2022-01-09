@@ -137,11 +137,12 @@ def start(message):
         msg = bot.send_message(chat_id,"It looks like it is your first time using me. Please enter your name in the next chat bubble. This name will be saved and used to identify yourself to others.")
         bot.register_next_step_handler(msg,register)
         return
-    
+    '''
     bot.send_sticker(
         chat_id, 
         'CAACAgUAAxkBAAEDoRJh1y0KgigTU87x7QYrbKJNbfDavQACawMAAlobywF60Koi6G4EECME'
     )
+    '''
 
     buttons = [
         InlineKeyboardButton(
