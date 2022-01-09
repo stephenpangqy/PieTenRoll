@@ -16,6 +16,7 @@ Our group, PieTenRoll has decided to work on a telegram bot project called Group
 # What it does
 **GroupTogether** is targeting two groups of users namely students who are **looking for a group** and students **looking for groupmates**. Upon starting the bot, the user will be prompted for their name if they are new to the bot. Next, users will choose the option of either finding a group or groupmates. They will then be asked to provide relevant information such as school, module code, section, etc before the bot performs the search. If a match is found, the user would be notified and would be given an option to start a conversation with the other party. During the conversation, users can choose to either accept or reject. If  'reject' is chosen, the conversation ends. Users cannot engage in multiple conversations simultaneously and must choose to accept or reject if they want to move on to the next conversation. 
 # Project Demo
+![Demo of telebot](images/demo/demo.gif)
 # References
 # Telegram Handle
 [@GroupTogether_bot](https://t.me/GroupTogether_bot)
