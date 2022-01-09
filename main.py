@@ -143,6 +143,8 @@ def start(message):
         'CAACAgUAAxkBAAEDoRJh1y0KgigTU87x7QYrbKJNbfDavQACawMAAlobywF60Koi6G4EECME'
     )
     '''
+    sti = open('images/sticker.webp', 'rb')
+    bot.send_sticker(chat_id, sti)
 
     buttons = [
         InlineKeyboardButton(
