@@ -1,4 +1,4 @@
-pytelegrambotapi
+pyTelegramBotAPI
 gtts
 praw
 flask
