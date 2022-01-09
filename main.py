@@ -139,7 +139,7 @@ def start(message):
         return
     bot.send_sticker(
         chat_id=chat_id, 
-        data='CAACAgUAAxkBAAEDoRJh1y0KgigTU87x7QYrbKJNbfDavQACawMAAlobywF60Koi6G4EECME'
+        sticker='CAACAgUAAxkBAAEDoRJh1y0KgigTU87x7QYrbKJNbfDavQACawMAAlobywF60Koi6G4EECME'
     )
 
     buttons = [
