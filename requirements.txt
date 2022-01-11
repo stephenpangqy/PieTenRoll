@@ -5,4 +5,4 @@ flask
 SQLAlchemy
 flask_sqlalchemy
 requests
-mysql-connector-python-rf
+mysql-connector
