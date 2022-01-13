@@ -7,13 +7,13 @@ from telebot.types import BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 
 
 # Telegram Bot
-API_KEY = ""
+API_KEY = "" #Telegram API key
 
 bot = telebot.TeleBot(API_KEY) 
 
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = ''
+app.config['SQLALCHEMY_DATABASE_URI'] = '' #token
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_recycle': 299}
 
@@ -140,7 +140,7 @@ def start(message):
             bot.register_next_step_handler(msg,register)
             return
     except:
-
+        print('error went in')
         db.session.rollback()
 
     '''
@@ -255,7 +255,7 @@ def view(message):
                 bot.send_message(chat_id, output, parse_mode= 'Markdown')
         
     except:
-        db.session.rollback()
+        bot.send_message(chat_id, "Sorry you have been inactive for a long time. Please /start again")
 
 # Edit requests made
 @bot.message_handler(commands=['edit'])
@@ -340,7 +340,7 @@ def editRequests(message):
                 message_text = f'To edit a search request, please click on the button with the corresponding number to the request you want to edit.'
                 bot.send_message(chat_id, message_text, reply_markup = InlineKeyboardMarkup(keyboard),parse_mode= 'Markdown')
     except:
-        db.session.rollback()
+        bot.send_message(chat_id, "Sorry you have been inactive for a long time. Please /start again")
 
 @bot.callback_query_handler(lambda query: query.data.split(":")[0] == 'edit_group')
 def editRequest(query):
@@ -554,7 +554,7 @@ def enter_semester1(message):
         msg = bot.send_message(chat_id, "Your group search request has been successfully created. We will search for available groups for you...")
         bot.register_next_step_handler(msg, search1(chat_id))
     except:
-        db.session.rollback()
+        bot.send_message(chat_id, "Sorry you have been inactive for a long time. Please /start again")
 
 def enter_semester2(message):
     chat_id = message.chat.id
@@ -618,6 +618,7 @@ def start_convo(query):
 
 @bot.callback_query_handler(lambda query: query.data.split(":")[0] == 'end_convo')
 def endConvo(query):
+    chat_id = query.from_user.id
     try:
         response = query.data.split(":")[1]
         other_chat_id = int(query.data.split(":")[2])
@@ -670,12 +671,12 @@ def endConvo(query):
             del conversation_dict[chat_id]
             del conversation_dict[other_chat_id]
     except:
-        db.session.rollback()
+        bot.send_message(chat_id, "Sorry you have been inactive for a long time. Please /start again")
 
 def converse(message):
     
+    chat_id = message.chat.id
     try:
-        chat_id = message.chat.id
         chat_message = message.text
         if chat_id not in conversation_dict:
             bot.send_message(chat_id,"You are not in a conversation!")
@@ -689,12 +690,13 @@ def converse(message):
             print(conversation_dict)
             bot.register_next_step_handler(msg, converse)
     except:
-        db.session.rollback()
+        bot.send_message(chat_id, "Sorry you have been inactive for a long time. Please /start again")
         
 @bot.message_handler(commands=['converse'])
 def startConvo(message):
+    
+    chat_id = message.chat.id
     try:
-        chat_id = message.chat.id
         if chat_id not in conversation_dict:
             bot.send_message(chat_id,"You are not in a conversation!")
         else:
@@ -710,7 +712,7 @@ def startConvo(message):
             requests.post(url,data).json()
             bot.register_next_step_handler(msg,converse)
     except:
-        db.session.rollback()
+        bot.send_message(chat_id, "Sorry you have been inactive for a long time. Please /start again")
 
 # Search Code
 def search1(chat_id):
@@ -737,7 +739,7 @@ def search1(chat_id):
         del temp_find_group_dict[chat_id]
     
     except:
-        db.session.rollback()
+        bot.send_message(chat_id, "Sorry you have been inactive for a long time. Please /start again")
 
 
 def search2(chat_id):
@@ -763,13 +765,13 @@ def search2(chat_id):
             
         del temp_find_member_dict[chat_id]
     except:
-        db.session.rollback()
+        bot.send_message(chat_id, "Sorry you have been inactive for a long time. Please /start again")
     
 @bot.message_handler(commands=['search'])
 def performSearch(message):
     # Perform group search
+    chat_id = message.chat.id
     try:
-        chat_id = message.chat.id
         looking_for_group_list = Looking_For_Group.query.filter_by(chat_id=chat_id)
         group_found = False
         for l in looking_for_group_list:
@@ -827,6 +829,6 @@ def performSearch(message):
                 bot.send_message(chat_id,"Sorry, it looks like that there are no available members that match your requests.")
                 
     except:
-        db.session.rollback()
+        bot.send_message(chat_id, "Sorry you have been inactive for a long time. Please /start again")
 
 bot.infinity_polling()
